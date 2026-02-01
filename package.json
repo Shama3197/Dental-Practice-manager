@@ -1,0 +1,54 @@
+{
+  "name": "dental-practice-manager",
+  "version": "1.0.0",
+  "description": "A comprehensive dental practice management system",
+  "private": true,
+  "workspaces": [
+    "tracker-backend",
+    "tracker-frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd tracker-backend && npm run dev",
+    "dev:frontend": "cd tracker-frontend && npm run dev",
+    "build": "npm run build:frontend",
+    "build:frontend": "cd tracker-frontend && npm run build",
+    "install:all": "npm install && cd tracker-backend && npm install && cd ../tracker-frontend && npm install",
+    "clean": "npm run clean:node_modules && npm run clean:build",
+    "clean:node_modules": "rimraf node_modules tracker-backend/node_modules tracker-frontend/node_modules",
+    "clean:build": "rimraf tracker-frontend/dist",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd tracker-backend && npm run lint",
+    "lint:frontend": "cd tracker-frontend && npm run lint",
+    "lint:fix": "npm run lint:fix:backend && npm run lint:fix:frontend",
+    "lint:fix:backend": "cd tracker-backend && npm run lint:fix",
+    "lint:fix:frontend": "cd tracker-frontend && npm run lint:fix",
+    "test": "node test-appointments.js && node test-appointments-frontend.js && node test-labwork.js && node test-reports.js",
+    "test:backend": "cd tracker-backend && npm test",
+    "test:frontend": "cd tracker-frontend && npm test",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd tracker-backend && npm start",
+    "start:frontend": "cd tracker-frontend && npm run preview",
+    "setup": "npm run install:all && npm run setup:env",
+    "setup:env": "node scripts/setup-env.js",
+    "health-check": "node scripts/health-check.js",
+    "reset-db": "cd tracker-backend && npm run reset-db"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "puppeteer": "^24.10.1",
+    "rimraf": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "date-fns": "^4.1.0",
+    "nodemailer": "^7.0.3",
+    "react": "^18.2.0",
+    "tailwindcss": "^3.3.2",
+    "vite": "^4.3.9"
+  }
+}
