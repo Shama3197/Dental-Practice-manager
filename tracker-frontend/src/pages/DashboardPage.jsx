@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useUserStore } from "../store/user"; // assumes gender is stored here
+import { useThemeStore } from "../store/theme"; // Dynamic Environment toggle
+import { getCircadianState, getCurrentHour } from "../utils/themeEngine"; // Circadian theme engine
 import useDarkMode from "../hooks/useDarkMode"; // optional custom hook
 import clsx from "clsx";
 import DailyCalendarSection from "../components/Dashboard/DailyCalendarSection";
@@ -18,9 +20,17 @@ const motivationalQuotes = [
 
 const DashboardPage = () => {
   const { user } = useUserStore(); // { name: "Dr. Shama", gender: "female" }
-  const [bgImage, setBgImage] = useState("");
+  const { isDynamicEnvironment } = useThemeStore(); // Dynamic Environment toggle state
   const isDark = useDarkMode && useDarkMode(); // returns true/false based on system or toggle
   const [quote, setQuote] = useState("");
+  
+  // Get circadian state based on user gender - always calculate regardless of toggle
+  const circadianState = getCircadianState(user.gender);
+  
+  // Get dynamic greeting - always use circadian greeting regardless of toggle
+  const getGreeting = () => {
+    return circadianState.greeting;
+  };
   const [metrics, setMetrics] = useState({
     totalPatients: 1247,
     todayAppointments: 18,
@@ -32,25 +42,6 @@ const DashboardPage = () => {
     treatmentGrowth: 15.7
   });
 
-  useEffect(() => {
-    const hour = new Date().getHours();
-    const gender = user.gender?.toLowerCase(); // "male" or "female"
-
-    const getTimeOfDay = () => {
-      if (hour >= 5 && hour < 12) return "morning";
-      if (hour >= 12 && hour < 18) return "noon";
-      return "evening";
-    };
-
-    const time = getTimeOfDay();
-    let prefix = "unisex";
-    if (time !== "morning") {
-      prefix = gender === "male" ? "male" : "female";
-    }
-    const imagePath = `/images/bg-${prefix}-${time}.webp`;
-    setBgImage(imagePath);
-    console.log("Dashboard background image:", imagePath);
-  }, [user.gender]);
 
   useEffect(() => {
     setQuote(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
@@ -97,38 +88,163 @@ const DashboardPage = () => {
       },
     ],
   };
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, grid: { display: false } },
-      x: { grid: { display: false } },
-    },
+  // Get chart options with adaptive text colors
+  const getChartOptions = () => {
+    const baseOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { 
+          beginAtZero: true, 
+          grid: { display: false },
+          ticks: {
+            color: isDynamicEnvironment && circadianState?.theme === 'night' ? '#ffffff' : '#1f2937'
+          }
+        },
+        x: { 
+          grid: { display: false },
+          ticks: {
+            color: isDynamicEnvironment && circadianState?.theme === 'night' ? '#ffffff' : '#1f2937'
+          }
+        },
+      },
+    };
+    return baseOptions;
   };
 
-  return (
-    <div
-      className="min-h-screen w-full bg-cover bg-center bg-no-repeat transition-all duration-300"
-      style={{ 
+  const chartOptions = getChartOptions();
+
+  // Get Dashboard background style
+  const getDashboardBackgroundStyle = () => {
+    // Safety: If toggle is OFF, MUST return to original minimalist light grey/white background
+    if (!isDynamicEnvironment) {
+      return {
         backgroundImage: `url('/images/dashboard-bg.png')`,
         backgroundAttachment: 'fixed',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         backgroundColor: '#e0e7ef',
-      }}
+      };
+    }
+    // When ON: no background (parent AppLayout handles it)
+    return {};
+  };
+
+  // Get greeting banner classes
+  const getGreetingBannerClasses = () => {
+    // When toggle is OFF: Glass effect for see-through banner
+    if (!isDynamicEnvironment) {
+      return 'bg-white/10 backdrop-blur-xl border-white/20';
+    }
+    // When toggle is ON: Pure transparency - completely see-through, no background
+    return 'bg-transparent border-transparent';
+  };
+
+  // Get greeting text colors
+  const getGreetingTextColors = () => {
+    // When toggle is OFF: Dark text for glass effect (readable on light background)
+    if (!isDynamicEnvironment) {
+      return {
+        heading: 'text-gray-900 drop-shadow-[0_2px_8px_rgba(255,255,255,0.8)]',
+        quote: 'text-gray-700 drop-shadow-[0_1px_4px_rgba(255,255,255,0.6)]'
+      };
+    }
+    // When toggle is ON: Dynamic text color based on hour
+    const currentHour = getCurrentHour();
+    const isDaylight = currentHour >= 6 && currentHour < 18; // 6 AM - 5:59 PM
+    
+    if (isDaylight) {
+      // Daylight hours: Black text for high contrast
+      return {
+        heading: 'text-gray-900 drop-shadow-[0_2px_8px_rgba(255,255,255,0.8)]',
+        quote: 'text-gray-800 drop-shadow-[0_1px_4px_rgba(255,255,255,0.6)]'
+      };
+    }
+    
+    // Night hours: White text with shadow for visibility
+    return {
+      heading: 'text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]',
+      quote: 'text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]'
+    };
+  };
+
+  const textColors = getGreetingTextColors();
+
+  // Get adaptive placard text colors for top 4 metric cards
+  const getMetricCardColors = () => {
+    // Safety: If toggle is OFF, MUST revert to original Minimalist UI colors
+    if (!isDynamicEnvironment) {
+      return {
+        title: 'text-gray-600',
+        value: 'text-gray-900'
+      };
+    }
+    
+    // Dynamic text color based on recordingHour (or current hour)
+    const currentHour = getCurrentHour();
+    const isNight = currentHour >= 18 || currentHour < 6; // Night: 18:00 - 05:59
+    
+    if (isNight) {
+      // Night Mode (18:00 - 05:59): white text for readability
+      return {
+        title: 'text-white',
+        value: 'text-white'
+      };
+    }
+    
+    // Day Mode (06:00 - 17:59): black text for readability
+    return {
+      title: 'text-gray-900',
+      value: 'text-gray-900'
+    };
+  };
+
+  // Get adaptive text colors for chart placards
+  const getChartCardColors = () => {
+    // Safety: If toggle is OFF, MUST revert to original Minimalist UI colors
+    if (!isDynamicEnvironment) {
+      return {
+        title: 'text-gray-900'
+      };
+    }
+    
+    // Dynamic text color based on recordingHour (or current hour)
+    const currentHour = getCurrentHour();
+    const isNight = currentHour >= 18 || currentHour < 6; // Night: 18:00 - 05:59
+    
+    if (isNight) {
+      // Night Mode (18:00 - 05:59): white text for readability
+      return {
+        title: 'text-white'
+      };
+    }
+    
+    // Day Mode (06:00 - 17:59): black text for readability
+    return {
+      title: 'text-gray-900'
+    };
+  };
+
+  const metricColors = getMetricCardColors();
+  const chartColors = getChartCardColors();
+
+  return (
+    <div
+      className="min-h-screen w-full transition-all duration-300"
+      style={getDashboardBackgroundStyle()}
     >
       <div className="p-4 max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between header-spacing bg-gradient-to-r from-[#111827] via-[#1a222c] to-[#0b1120] p-6 rounded-xl shadow-lg border border-white/5">
+        {/* Header - Pure Transparent Greeting Board */}
+        <div className={`flex items-center justify-between header-spacing ${getGreetingBannerClasses()} p-6 rounded-xl transition-all duration-300 ${!isDynamicEnvironment ? 'shadow-lg border' : ''}`}>
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-gradient-to-r from-[#d4af37] to-[#f2d472] rounded-full flex items-center justify-center text-[#1a222c] text-2xl font-bold shadow-xl border-2 border-[#f2d472]">
               DS
             </div>
             <div>
-              <h1 className="text-4xl font-light tracking-wide text-[#f8f9fa]">Good Morning, Dr. Shama</h1>
-              <p className="text-lg mt-1 text-[#f8f9fa]/70 animate-fade-in">{quote}</p>
+              <h1 className={`text-4xl font-light tracking-wide ${textColors.heading}`}>{getGreeting()}, Dr. Shama</h1>
+              <p className={`text-lg mt-1 ${textColors.quote} animate-fade-in`}>{quote}</p>
             </div>
           </div>
           <div className="hidden md:block">
@@ -137,11 +253,11 @@ const DashboardPage = () => {
         </div>
         {/* Metric Cards - single row, compact */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+          <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <div className="flex items-center justify-between w-full">
               <div>
-                <p className="text-xs font-medium text-gray-600">Total Patients</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">{metrics.totalPatients.toLocaleString()}</p>
+                <p className={`text-xs font-medium ${metricColors.title}`}>Total Patients</p>
+                <p className={`text-xl font-bold ${metricColors.value} mt-1`}>{metrics.totalPatients.toLocaleString()}</p>
                 <div className="flex items-center mt-1">
                   <FiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
                   <span className="text-xs font-medium text-green-600">{metrics.patientGrowth}%</span>
@@ -153,11 +269,11 @@ const DashboardPage = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+          <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <div className="flex items-center justify-between w-full">
               <div>
-                <p className="text-xs font-medium text-gray-600">Today's Appointments</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">{metrics.todayAppointments}</p>
+                <p className={`text-xs font-medium ${metricColors.title}`}>Today's Appointments</p>
+                <p className={`text-xl font-bold ${metricColors.value} mt-1`}>{metrics.todayAppointments}</p>
                 <div className="flex items-center mt-1">
                   {metrics.appointmentGrowth >= 0 ? <FiTrendingUp className="w-4 h-4 text-green-500 mr-1" /> : <FiTrendingDown className="w-4 h-4 text-red-500 mr-1" />}
                   <span className={`text-xs font-medium ${metrics.appointmentGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>{Math.abs(metrics.appointmentGrowth)}%</span>
@@ -169,11 +285,11 @@ const DashboardPage = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+          <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <div className="flex items-center justify-between w-full">
               <div>
-                <p className="text-xs font-medium text-gray-600">Monthly Revenue</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">${metrics.monthlyRevenue.toLocaleString()}</p>
+                <p className={`text-xs font-medium ${metricColors.title}`}>Monthly Revenue</p>
+                <p className={`text-xl font-bold ${metricColors.value} mt-1`}>${metrics.monthlyRevenue.toLocaleString()}</p>
                 <div className="flex items-center mt-1">
                   <FiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
                   <span className="text-xs font-medium text-green-600">{metrics.revenueGrowth}%</span>
@@ -185,11 +301,11 @@ const DashboardPage = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+          <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <div className="flex items-center justify-between w-full">
               <div>
-                <p className="text-xs font-medium text-gray-600">Pending Treatments</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">{metrics.pendingTreatments}</p>
+                <p className={`text-xs font-medium ${metricColors.title}`}>Pending Treatments</p>
+                <p className={`text-xl font-bold ${metricColors.value} mt-1`}>{metrics.pendingTreatments}</p>
                 <div className="flex items-center mt-1">
                   <FiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
                   <span className="text-xs font-medium text-green-600">{metrics.treatmentGrowth}%</span>
@@ -202,23 +318,23 @@ const DashboardPage = () => {
             </div>
           </div>
         </div>
-        {/* Daily Calendar Section - moved up */}
-        <div className="my-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Daily Calendar Section - Calendar and Today's Checklist */}
+        <div className="my-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
           <DailyCalendarSection />
           <DailyTasker />
         </div>
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 grid-spacing section-spacing">
           {/* Revenue Trend */}
-          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
+          <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+            <h3 className={`text-lg font-semibold ${chartColors.title} mb-4`}>Revenue Trend</h3>
             <div className="h-64">
               <Line data={revenueData} options={chartOptions} />
             </div>
           </div>
           {/* Weekly Appointments */}
-          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Appointments</h3>
+          <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+            <h3 className={`text-lg font-semibold ${chartColors.title} mb-4`}>Weekly Appointments</h3>
             <div className="h-64">
               <Bar data={appointmentData} options={chartOptions} />
             </div>
@@ -227,18 +343,25 @@ const DashboardPage = () => {
         {/* Treatment Distribution & Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 grid-spacing section-spacing">
           {/* Treatment Distribution */}
-          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Treatment Distribution</h3>
+          <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+            <h3 className={`text-lg font-semibold ${chartColors.title} mb-4`}>Treatment Distribution</h3>
             <div className="h-64">
               <Doughnut data={treatmentData} options={{
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
+                plugins: { 
+                  legend: { 
+                    position: 'bottom',
+                    labels: {
+                      color: isDynamicEnvironment && circadianState?.theme === 'night' ? '#ffffff' : '#1f2937'
+                    }
+                  } 
+                },
               }} />
             </div>
           </div>
           {/* Quick Actions 2x2 grid */}
-          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding flex flex-col h-full shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+          <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding flex flex-col h-full shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 grid-rows-2 gap-4 flex-1">
               <button className="bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg p-4 flex flex-col items-center" onClick={() => window.location.href = '/patients/new'}>
@@ -261,7 +384,7 @@ const DashboardPage = () => {
           </div>
         </div>
         {/* Recent Activity */}
-        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+        <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
           <div className="space-y-4">
             {[

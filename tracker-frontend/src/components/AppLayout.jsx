@@ -10,10 +10,15 @@ import { useState } from 'react';
 import Sidebar from './Sidebar';
 import ClinicIllustration from './UI/ClinicIllustration';
 import { NavLink } from 'react-router-dom';
+import { useThemeStore } from '../store/theme';
+import { useUserStore } from '../store/user';
+import { getCircadianState } from '../utils/themeEngine';
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isDynamicEnvironment } = useThemeStore();
+  const { user } = useUserStore();
 
   // Get current page name for active state
   const getCurrentPage = () => {
@@ -26,10 +31,34 @@ const AppLayout = ({ children }) => {
     return 'Dashboard';
   };
 
+  // Get circadian state when toggle is ON
+  const circadianState = isDynamicEnvironment ? getCircadianState(user.gender) : null;
+
+  // Get background style for parent wrapper
+  const getBackgroundStyle = () => {
+    if (!isDynamicEnvironment) {
+      return {}; // No background when toggle is OFF
+    }
+    return {
+      backgroundImage: `url(${circadianState?.bg})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      minHeight: '100vh',
+      transition: 'background-image 0.8s ease-in-out',
+    };
+  };
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-gradient-to-br from-cyan-50 to-mint-50">
+    <div 
+      className="flex h-screen w-screen overflow-hidden transition-all duration-300"
+      style={{
+        ...getBackgroundStyle(),
+        ...(!isDynamicEnvironment && { background: 'linear-gradient(to bottom right, #ecfeff, #f0fdfa)' })
+      }}
+    >
       {/* Sidebar - fixed width, no overlap */}
-      <aside className="w-64 min-w-64 h-full bg-white shadow-lg flex-shrink-0 flex flex-col z-10">
+      <aside className="w-64 min-w-64 h-full shadow-lg flex-shrink-0 flex flex-col z-10">
         <Sidebar active={getCurrentPage()}>
           <NavLink to="/calendar" className="sidebar-link">
             <FiCalendar className="sidebar-icon" />

@@ -14,7 +14,11 @@ import {
   FiEdit,
   FiTrash2
 } from 'react-icons/fi';
-import AppointmentFormModal from '../components/Appointments/AppointmentFormModal';
+import NewAppointmentForm from '../components/Appointments/NewAppointmentForm';
+import { appointmentService } from '../services/appointmentService';
+import { useThemeStore } from '../store/theme';
+import { useUserStore } from '../store/user';
+import { getCircadianState } from '../utils/themeEngine';
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -25,82 +29,42 @@ const Appointments = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const { isDynamicEnvironment } = useThemeStore();
+  const { user } = useUserStore();
+  const circadianState = getCircadianState(user.gender);
+
+  // Get adaptive title color
+  const getTitleColor = () => {
+    if (!isDynamicEnvironment) {
+      return 'text-gray-900';
+    }
+    if (circadianState?.theme === 'night') {
+      return 'text-white drop-shadow-lg';
+    }
+    return 'text-gray-900';
+  };
 
   useEffect(() => {
-    // Simulate loading and fetch appointments data
+    // Fetch appointments from API
     const loadAppointments = async () => {
       try {
-        // Mock data - replace with actual API calls
-        const mockAppointments = [
-          {
-            id: 1,
-            patientName: 'John Doe',
-            patientPhone: '(555) 123-4567',
-            date: '2024-02-20',
-            time: '09:00',
-            duration: 60,
-            status: 'scheduled',
-            treatment: 'Regular Cleaning',
-            teeth: ['1', '2', '3', '4'],
-            notes: 'Patient prefers morning appointments',
-            insurance: 'Blue Cross'
-          },
-          {
-            id: 2,
-            patientName: 'Sarah Wilson',
-            patientPhone: '(555) 234-5678',
-            date: '2024-02-20',
-            time: '10:30',
-            duration: 90,
-            status: 'scheduled',
-            treatment: 'Crown Preparation',
-            teeth: ['14'],
-            notes: 'Follow-up for crown fitting',
-            insurance: 'Aetna'
-          },
-          {
-            id: 3,
-            patientName: 'Mike Johnson',
-            patientPhone: '(555) 345-6789',
-            date: '2024-02-19',
-            time: '14:00',
-            duration: 45,
-            status: 'completed',
-            treatment: 'Root Canal',
-            teeth: ['19'],
-            notes: 'Procedure completed successfully',
-            insurance: 'Cigna'
-          },
-          {
-            id: 4,
-            patientName: 'Emily Davis',
-            patientPhone: '(555) 456-7890',
-            date: '2024-02-21',
-            time: '11:00',
-            duration: 30,
-            status: 'cancelled',
-            treatment: 'Consultation',
-            teeth: [],
-            notes: 'Patient called to reschedule',
-            insurance: 'United Health'
-          },
-          {
-            id: 5,
-            patientName: 'Robert Brown',
-            patientPhone: '(555) 567-8901',
-            date: '2024-02-22',
-            time: '15:30',
-            duration: 60,
-            status: 'scheduled',
-            treatment: 'Filling',
-            teeth: ['5', '6'],
-            notes: 'Regular checkup and filling',
-            insurance: 'Blue Cross'
-          }
-        ];
-        
-        setAppointments(mockAppointments);
-        setFilteredAppointments(mockAppointments);
+        const data = await appointmentService.getAllAppointments();
+        // Transform API data to match component structure
+        const transformedAppointments = data.map(apt => ({
+          id: apt._id,
+          patientName: apt.patient?.name || 'Unknown Patient',
+          patientPhone: apt.patient?.phone || '',
+          date: apt.date ? new Date(apt.date).toISOString().split('T')[0] : '',
+          time: apt.time || '',
+          duration: 60, // Default duration
+          status: apt.status?.toLowerCase() || 'scheduled',
+          treatment: apt.treatmentDetails?.join(', ') || apt.treatmentType || 'Treatment',
+          teeth: apt.selectedTeeth || [],
+          notes: apt.caseNotes || '',
+          insurance: apt.patient?.insurance || ''
+        }));
+        setAppointments(transformedAppointments);
+        setFilteredAppointments(transformedAppointments);
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading appointments:', error);
@@ -110,6 +74,35 @@ const Appointments = () => {
 
     loadAppointments();
   }, []);
+
+  const handleAppointmentCreated = () => {
+    // Refresh appointments list
+    const loadAppointments = async () => {
+      try {
+        const data = await appointmentService.getAllAppointments();
+        const transformedAppointments = data.map(apt => ({
+          id: apt._id,
+          patientName: apt.patient?.name || 'Unknown Patient',
+          patientPhone: apt.patient?.phone || '',
+          date: apt.date ? new Date(apt.date).toISOString().split('T')[0] : '',
+          time: apt.time || '',
+          duration: 60,
+          status: apt.status?.toLowerCase() || 'scheduled',
+          treatment: apt.treatmentDetails?.join(', ') || apt.treatmentType || 'Treatment',
+          teeth: apt.selectedTeeth || [],
+          notes: apt.caseNotes || '',
+          insurance: apt.patient?.insurance || ''
+        }));
+        setAppointments(transformedAppointments);
+        setFilteredAppointments(transformedAppointments);
+        // Trigger refresh event for DailyTasker
+        window.dispatchEvent(new CustomEvent('appointmentCreated'));
+      } catch (error) {
+        console.error('Error refreshing appointments:', error);
+      }
+    };
+    loadAppointments();
+  };
 
   useEffect(() => {
     // Filter appointments based on search term, status, and date
@@ -270,8 +263,8 @@ const Appointments = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
-          <p className="text-gray-600 mt-1">Manage patient appointments and scheduling</p>
+          <h1 className={`text-2xl font-bold ${getTitleColor()}`}>Appointments</h1>
+          <p className={`mt-1 ${isDynamicEnvironment && circadianState?.theme === 'night' ? 'text-white/80' : 'text-gray-600'}`}>Manage patient appointments and scheduling</p>
         </div>
         <button 
           onClick={() => setShowModal(true)}
@@ -415,14 +408,10 @@ const Appointments = () => {
 
       {/* Appointment Form Modal */}
       {showModal && (
-        <AppointmentFormModal
+        <NewAppointmentForm
           isOpen={showModal}
           onClose={() => setShowModal(false)}
-          onSubmit={(formData) => {
-            console.log('New appointment:', formData);
-            setShowModal(false);
-            // Here you would typically save to backend and refresh the list
-          }}
+          onAppointmentCreated={handleAppointmentCreated}
         />
       )}
     </div>

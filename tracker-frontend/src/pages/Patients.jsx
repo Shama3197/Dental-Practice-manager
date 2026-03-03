@@ -23,82 +23,45 @@ const Patients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const { isDynamicEnvironment } = useThemeStore();
+  const { user } = useUserStore();
+  const circadianState = getCircadianState(user.gender);
+
+  // Get adaptive title color
+  const getTitleColor = () => {
+    if (!isDynamicEnvironment) {
+      return 'text-gray-900';
+    }
+    if (circadianState?.theme === 'night') {
+      return 'text-white drop-shadow-lg';
+    }
+    return 'text-gray-900';
+  };
 
   useEffect(() => {
-    // Simulate loading and fetch patients data
+    // Fetch patients from API
     const loadPatients = async () => {
       try {
-        // Mock data - replace with actual API calls
-        const mockPatients = [
-          {
-            id: 1,
-            name: 'John Doe',
-            email: 'john.doe@email.com',
-            phone: '(555) 123-4567',
-            dateOfBirth: '1985-03-15',
-            address: '123 Main St, City, State',
-            status: 'active',
-            lastVisit: '2024-01-15',
-            nextAppointment: '2024-02-20',
-            insurance: 'Blue Cross',
-            notes: 'Regular checkup patient'
-          },
-          {
-            id: 2,
-            name: 'Sarah Wilson',
-            email: 'sarah.wilson@email.com',
-            phone: '(555) 234-5678',
-            dateOfBirth: '1990-07-22',
-            address: '456 Oak Ave, City, State',
-            status: 'active',
-            lastVisit: '2024-01-10',
-            nextAppointment: null,
-            insurance: 'Aetna',
-            notes: 'Requires follow-up for crown'
-          },
-          {
-            id: 3,
-            name: 'Mike Johnson',
-            email: 'mike.johnson@email.com',
-            phone: '(555) 345-6789',
-            dateOfBirth: '1978-11-08',
-            address: '789 Pine Rd, City, State',
-            status: 'inactive',
-            lastVisit: '2023-12-05',
-            nextAppointment: null,
-            insurance: 'Cigna',
-            notes: 'Moved to different city'
-          },
-          {
-            id: 4,
-            name: 'Emily Davis',
-            email: 'emily.davis@email.com',
-            phone: '(555) 456-7890',
-            dateOfBirth: '1995-04-12',
-            address: '321 Elm St, City, State',
-            status: 'active',
-            lastVisit: '2024-01-20',
-            nextAppointment: '2024-02-25',
-            insurance: 'United Health',
-            notes: 'New patient, first visit completed'
-          },
-          {
-            id: 5,
-            name: 'Robert Brown',
-            email: 'robert.brown@email.com',
-            phone: '(555) 567-8901',
-            dateOfBirth: '1982-09-30',
-            address: '654 Maple Dr, City, State',
-            status: 'active',
-            lastVisit: '2024-01-18',
-            nextAppointment: '2024-02-22',
-            insurance: 'Blue Cross',
-            notes: 'Regular cleaning and checkup'
-          }
-        ];
-        
-        setPatients(mockPatients);
-        setFilteredPatients(mockPatients);
+        const { patientService } = await import('../services/patientService');
+        const data = await patientService.getAllPatients();
+        // Transform API data to match component structure
+        const transformedPatients = data.map(patient => ({
+          id: patient._id,
+          name: patient.name,
+          email: patient.email,
+          phone: patient.phone,
+          dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split('T')[0] : '',
+          address: patient.address ? 
+            `${patient.address.street || ''}, ${patient.address.city || ''}, ${patient.address.state || ''}`.trim() : 
+            '',
+          status: patient.status?.toLowerCase() || 'active',
+          lastVisit: patient.lastVisit || null,
+          nextAppointment: patient.nextAppointment || null,
+          insurance: patient.insurance?.provider || '',
+          notes: patient.notes || ''
+        }));
+        setPatients(transformedPatients);
+        setFilteredPatients(transformedPatients);
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading patients:', error);
@@ -237,8 +200,8 @@ const Patients = () => {
       {/* Header */}
       <div className="flex items-center justify-between header-spacing">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Patients</h1>
-          <p className="text-gray-600 mt-1">Manage your patient records and information</p>
+          <h1 className={`text-2xl font-bold ${getTitleColor()}`}>Patients</h1>
+          <p className={`mt-1 ${isDynamicEnvironment && circadianState?.theme === 'night' ? 'text-white/80' : 'text-gray-600'}`}>Manage your patient records and information</p>
         </div>
         <button className="bg-gradient-to-r from-blue-500 to-blue-600 text-white button-padding rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all flex items-center">
           <FiPlus className="w-4 h-4 mr-2" />
@@ -286,7 +249,7 @@ const Patients = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 grid-spacing section-spacing">
-        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+        <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiUser className="w-6 h-6 text-blue-600" />
@@ -298,7 +261,7 @@ const Patients = () => {
           </div>
         </div>
         
-        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+        <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiUser className="w-6 h-6 text-green-600" />
@@ -312,7 +275,7 @@ const Patients = () => {
           </div>
         </div>
         
-        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+        <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiCalendar className="w-6 h-6 text-yellow-600" />
@@ -331,7 +294,7 @@ const Patients = () => {
           </div>
         </div>
         
-        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+        <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiCalendar className="w-6 h-6 text-purple-600" />

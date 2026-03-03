@@ -14,6 +14,9 @@ import {
   FiCheckCircle,
   FiAlertCircle
 } from 'react-icons/fi';
+import { useThemeStore } from '../store/theme';
+import { useUserStore } from '../store/user';
+import { getCircadianState } from '../utils/themeEngine';
 
 const LabWork = () => {
   const [labWork, setLabWork] = useState([]);
@@ -21,12 +24,86 @@ const LabWork = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const { isDynamicEnvironment } = useThemeStore();
+  const { user } = useUserStore();
+  const circadianState = getCircadianState(user.gender);
+
+  // Get adaptive title color
+  const getTitleColor = () => {
+    if (!isDynamicEnvironment) {
+      return 'text-gray-900';
+    }
+    if (circadianState?.theme === 'night') {
+      return 'text-white drop-shadow-lg';
+    }
+    return 'text-gray-900';
+  };
 
   useEffect(() => {
-    // Simulate loading and fetch lab work data
+    // Fetch lab work data from API
     const loadLabWork = async () => {
       try {
-        // Mock data - replace with actual API calls
+        const { getLabWorks } = await import('../api/labwork');
+        const response = await getLabWorks({ page: 1, limit: 100 });
+        const labWorkData = response.data?.data || response.data || [];
+        
+        // Transform API data to match component structure
+        const transformedLabWork = await Promise.all(labWorkData.map(async (lab) => {
+          // Fetch patient data if not populated
+          let patientName = 'Unknown Patient';
+          let patientEmail = '';
+          let patientPhone = '';
+          let address = '';
+          
+          if (lab.patient && typeof lab.patient === 'object' && lab.patient.name) {
+            patientName = lab.patient.name;
+            patientEmail = lab.patient.email || '';
+            patientPhone = lab.patient.phone || '';
+            if (lab.patient.address) {
+              address = `${lab.patient.address.street || ''}, ${lab.patient.address.city || ''}, ${lab.patient.address.state || ''}`.trim();
+            }
+          } else if (lab.patient) {
+            // Patient is just an ID, fetch it
+            try {
+              const { API_BASE_URL } = await import('../services/api');
+              const patientRes = await fetch(`${API_BASE_URL}/patients/${lab.patient}`);
+              if (patientRes.ok) {
+                const patient = await patientRes.json();
+                patientName = patient.name;
+                patientEmail = patient.email || '';
+                patientPhone = patient.phone || '';
+                if (patient.address) {
+                  address = `${patient.address.street || ''}, ${patient.address.city || ''}, ${patient.address.state || ''}`.trim();
+                }
+              }
+            } catch (err) {
+              console.error('Error fetching patient:', err);
+            }
+          }
+          
+          return {
+            id: lab._id,
+            patientName: patientName,
+            patientEmail: patientEmail,
+            patientPhone: patientPhone,
+            type: lab.type || lab.caseType || 'Lab Work',
+            status: lab.status?.toLowerCase().replace(' ', '_') || 'pending',
+            orderDate: lab.sentDate ? new Date(lab.sentDate).toISOString().split('T')[0] : 
+                      lab.createdAt ? new Date(lab.createdAt).toISOString().split('T')[0] : '',
+            expectedDate: lab.receivedDate ? new Date(lab.receivedDate).toISOString().split('T')[0] : '',
+            labName: lab.labName || 'Lab',
+            labPhone: '',
+            notes: lab.notes || '',
+            address: address
+          };
+        }));
+        
+        setLabWork(transformedLabWork);
+        setFilteredLabWork(transformedLabWork);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading lab work:', error);
+        // Fallback to mock data if API fails
         const mockLabWork = [
           {
             id: 1,
@@ -102,9 +179,6 @@ const LabWork = () => {
         
         setLabWork(mockLabWork);
         setFilteredLabWork(mockLabWork);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error loading lab work:', error);
         setIsLoading(false);
       }
     };
@@ -267,8 +341,8 @@ const LabWork = () => {
       {/* Header */}
       <div className="flex items-center justify-between header-spacing">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lab Work</h1>
-          <p className="text-gray-600 mt-1">Manage dental lab work orders and tracking</p>
+          <h1 className={`text-2xl font-bold ${getTitleColor()}`}>Lab Work</h1>
+          <p className={`mt-1 ${isDynamicEnvironment && circadianState?.theme === 'night' ? 'text-white/80' : 'text-gray-600'}`}>Manage dental lab work orders and tracking</p>
         </div>
         <button className="bg-gradient-to-r from-blue-500 to-blue-600 text-white button-padding rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all flex items-center">
           <FiPlus className="w-4 h-4 mr-2" />
@@ -310,7 +384,7 @@ const LabWork = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 grid-spacing section-spacing">
-        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+        <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiFileText className="w-6 h-6 text-blue-600" />
@@ -322,7 +396,7 @@ const LabWork = () => {
           </div>
         </div>
         
-        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+        <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiCheckCircle className="w-6 h-6 text-green-600" />
@@ -336,7 +410,7 @@ const LabWork = () => {
           </div>
         </div>
         
-        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+        <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiClock className="w-6 h-6 text-blue-600" />
@@ -350,7 +424,7 @@ const LabWork = () => {
           </div>
         </div>
         
-        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
+        <div className="bg-white/20 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiAlertCircle className="w-6 h-6 text-yellow-600" />
