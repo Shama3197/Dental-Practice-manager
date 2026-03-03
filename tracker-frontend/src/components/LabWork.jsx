@@ -310,9 +310,9 @@ const LabWork = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 grid-spacing section-spacing">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 card-padding">
+        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiFileText className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
@@ -322,9 +322,9 @@ const LabWork = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 card-padding">
+        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiCheckCircle className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-4">
@@ -336,9 +336,9 @@ const LabWork = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 card-padding">
+        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiClock className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
@@ -350,9 +350,9 @@ const LabWork = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 card-padding">
+        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center">
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/70 rounded-lg flex items-center justify-center">
               <FiAlertCircle className="w-6 h-6 text-yellow-600" />
             </div>
             <div className="ml-4">

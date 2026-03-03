@@ -430,7 +430,7 @@ const Income = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white/30 backdrop-blur-xl p-6 rounded-lg border border-white/20 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Income</p>
@@ -438,13 +438,13 @@ const Income = () => {
                 ${stats.summary?.totalIncome?.toLocaleString() || '0'}
               </p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
+            <div className="p-3 bg-white/70 rounded-full">
               <FiDollarSign className="w-6 h-6 text-green-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white/30 backdrop-blur-xl p-6 rounded-lg border border-white/20 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Average Income</p>
@@ -452,13 +452,13 @@ const Income = () => {
                 ${stats.summary?.averageIncome?.toFixed(2) || '0'}
               </p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
+            <div className="p-3 bg-white/70 rounded-full">
               <FiTrendingUp className="w-6 h-6 text-blue-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white/30 backdrop-blur-xl p-6 rounded-lg border border-white/20 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Entries</p>
@@ -466,13 +466,13 @@ const Income = () => {
                 {stats.summary?.count || '0'}
               </p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-full">
+            <div className="p-3 bg-white/70 rounded-full">
               <FiCalendar className="w-6 h-6 text-purple-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white/30 backdrop-blur-xl p-6 rounded-lg border border-white/20 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Highest Amount</p>
@@ -480,7 +480,7 @@ const Income = () => {
                 ${stats.summary?.maxAmount?.toLocaleString() || '0'}
               </p>
             </div>
-            <div className="p-3 bg-yellow-100 rounded-full">
+            <div className="p-3 bg-white/70 rounded-full">
               <FiBarChart className="w-6 h-6 text-yellow-600" />
             </div>
           </div>

@@ -121,21 +121,23 @@ const DashboardPage = () => {
     >
       <div className="p-4 max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between header-spacing bg-gradient-to-r from-blue-50 to-indigo-100 p-6 rounded-xl shadow-sm">
+        <div className="flex items-center justify-between header-spacing bg-gradient-to-r from-[#111827] via-[#1a222c] to-[#0b1120] p-6 rounded-xl shadow-lg border border-white/5">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+            <div className="w-16 h-16 bg-gradient-to-r from-[#d4af37] to-[#f2d472] rounded-full flex items-center justify-center text-[#1a222c] text-2xl font-bold shadow-xl border-2 border-[#f2d472]">
               DS
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-800">Good Morning, Dr. Shama</h1>
-              <p className="text-gray-600 text-lg mt-1 animate-fade-in">{quote}</p>
+              <h1 className="text-4xl font-light tracking-wide text-[#f8f9fa]">Good Morning, Dr. Shama</h1>
+              <p className="text-lg mt-1 text-[#f8f9fa]/70 animate-fade-in">{quote}</p>
             </div>
           </div>
-          <ClinicIllustration />
+          <div className="hidden md:block">
+            <ClinicIllustration />
+          </div>
         </div>
         {/* Metric Cards - single row, compact */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col items-start justify-center min-w-0">
+          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <div className="flex items-center justify-between w-full">
               <div>
                 <p className="text-xs font-medium text-gray-600">Total Patients</p>
@@ -146,12 +148,12 @@ const DashboardPage = () => {
                   <span className="text-xs text-gray-500 ml-1">vs last month</span>
                 </div>
               </div>
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center ml-2">
-                <FiUsers className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-white/70 rounded-lg flex items-center justify-center ml-2">
+                <FiUsers className="w-4 h-4 text-green-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col items-start justify-center min-w-0">
+          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <div className="flex items-center justify-between w-full">
               <div>
                 <p className="text-xs font-medium text-gray-600">Today's Appointments</p>
@@ -162,12 +164,12 @@ const DashboardPage = () => {
                   <span className="text-xs text-gray-500 ml-1">vs last month</span>
                 </div>
               </div>
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center ml-2">
-                <FiCalendar className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-white/70 rounded-lg flex items-center justify-center ml-2">
+                <FiCalendar className="w-4 h-4 text-blue-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col items-start justify-center min-w-0">
+          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <div className="flex items-center justify-between w-full">
               <div>
                 <p className="text-xs font-medium text-gray-600">Monthly Revenue</p>
@@ -178,12 +180,12 @@ const DashboardPage = () => {
                   <span className="text-xs text-gray-500 ml-1">vs last month</span>
                 </div>
               </div>
-              <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center ml-2">
-                <FiDollarSign className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-white/70 rounded-lg flex items-center justify-center ml-2">
+                <FiDollarSign className="w-4 h-4 text-purple-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col items-start justify-center min-w-0">
+          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 p-4 flex flex-col items-start justify-center min-w-0 shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <div className="flex items-center justify-between w-full">
               <div>
                 <p className="text-xs font-medium text-gray-600">Pending Treatments</p>
@@ -194,8 +196,8 @@ const DashboardPage = () => {
                   <span className="text-xs text-gray-500 ml-1">vs last month</span>
                 </div>
               </div>
-              <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center ml-2">
-                <FiClipboard className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-white/70 rounded-lg flex items-center justify-center ml-2">
+                <FiClipboard className="w-4 h-4 text-yellow-600" />
               </div>
             </div>
           </div>
@@ -208,14 +210,14 @@ const DashboardPage = () => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 grid-spacing section-spacing">
           {/* Revenue Trend */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 card-padding">
+          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
             <div className="h-64">
               <Line data={revenueData} options={chartOptions} />
             </div>
           </div>
           {/* Weekly Appointments */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 card-padding">
+          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Appointments</h3>
             <div className="h-64">
               <Bar data={appointmentData} options={chartOptions} />
@@ -225,7 +227,7 @@ const DashboardPage = () => {
         {/* Treatment Distribution & Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 grid-spacing section-spacing">
           {/* Treatment Distribution */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 card-padding">
+          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Treatment Distribution</h3>
             <div className="h-64">
               <Doughnut data={treatmentData} options={{
@@ -236,7 +238,7 @@ const DashboardPage = () => {
             </div>
           </div>
           {/* Quick Actions 2x2 grid */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 card-padding flex flex-col h-full">
+          <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding flex flex-col h-full shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 grid-rows-2 gap-4 flex-1">
               <button className="bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg p-4 flex flex-col items-center" onClick={() => window.location.href = '/patients/new'}>
@@ -259,7 +261,7 @@ const DashboardPage = () => {
           </div>
         </div>
         {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 card-padding">
+        <div className="bg-white/30 backdrop-blur-xl rounded-xl border border-white/20 card-padding shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
           <div className="space-y-4">
             {[

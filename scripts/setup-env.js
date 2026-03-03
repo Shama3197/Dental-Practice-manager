@@ -41,7 +41,7 @@ if (!fs.existsSync(frontendEnvPath)) {
   console.log('📝 Creating frontend .env file...');
   const frontendEnvContent = `# Frontend Environment Variables
 VITE_API_URL=http://localhost:5000/api
-VITE_APP_NAME=Dental Practice Manager
+VITE_APP_NAME=Oryx
 `;
   fs.writeFileSync(frontendEnvPath, frontendEnvContent);
   console.log('✅ Frontend .env file created');

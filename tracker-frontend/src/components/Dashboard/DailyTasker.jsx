@@ -27,7 +27,7 @@ export default function DailyTasker() {
   };
 
   return (
-    <div className="rounded-xl shadow bg-white p-4 md:p-5 border border-gray-100 flex flex-col min-h-[320px]">
+    <div className="rounded-xl bg-white/30 backdrop-blur-xl p-4 md:p-5 border border-white/20 flex flex-col min-h-[320px] shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
       <h2 className="text-lg font-semibold text-gray-800 mb-2">Today's Checklist</h2>
       <div className="flex gap-2 mb-3">
         <input

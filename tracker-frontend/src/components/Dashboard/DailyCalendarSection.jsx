@@ -48,7 +48,7 @@ export default function DailyCalendarSection() {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
       {/* Calendar Card */}
-      <div className="rounded-xl shadow bg-white p-4 md:p-5 border border-gray-100 flex flex-col min-h-[320px]">
+      <div className="rounded-xl bg-white/30 backdrop-blur-xl p-4 md:p-5 border border-white/20 flex flex-col min-h-[320px] shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-gray-800">Your Calendar</h2>
           <button
@@ -71,7 +71,7 @@ export default function DailyCalendarSection() {
       </div>
 
       {/* Tasks Card */}
-      <div className="rounded-xl shadow bg-white p-4 md:p-5 border border-gray-100 flex flex-col min-h-[320px]">
+      <div className="rounded-xl bg-white/30 backdrop-blur-xl p-4 md:p-5 border border-white/20 flex flex-col min-h-[320px] shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-300 hover:border-[#d4af37]/50 hover:shadow-[0_0_28px_rgba(242,212,114,0.4)] hover:-translate-y-1">
         <h2 className="text-lg font-semibold text-gray-800 mb-2">Tasks for {selectedDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</h2>
         <ul className="mb-2 space-y-1 text-sm">
           {tasks.length === 0 && <li className="text-gray-400 italic">No tasks for this day.</li>}

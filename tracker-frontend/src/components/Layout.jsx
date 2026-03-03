@@ -13,7 +13,7 @@ function Layout() {
   return (
     <div className={`min-h-screen flex ${isDarkMode ? 'dark' : ''} bg-background-light dark:bg-background-dark`}>
       <Sidebar toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
-      <main className="flex-1 ml-64 p-6 pb-3">
+      <main className="flex-1 p-6 pb-3">
         <Outlet />
       </main>
     </div>

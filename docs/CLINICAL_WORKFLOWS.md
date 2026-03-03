@@ -549,10 +549,10 @@ router.delete('/patients/:id', async (req, res) => {
 ### 3.4.1 Purpose and Scope
 
 **Purpose:**  
-This Standard Operating Procedure (SOP) establishes the systematic framework for ensuring data integrity, clinical validation, and regulatory compliance within the Restorative_Root clinical information system. This procedure ensures that all clinical data entries maintain accuracy, traceability, and auditability standards required for Life Sciences regulatory audits.
+This Standard Operating Procedure (SOP) establishes the systematic framework for ensuring data integrity, clinical validation, and regulatory compliance within the Oryx clinical information system. This procedure ensures that all clinical data entries maintain accuracy, traceability, and auditability standards required for Life Sciences regulatory audits.
 
 **Scope:**  
-This SOP applies to all clinical data entry, treatment plan creation, appointment scheduling, and billing operations within the Restorative_Root system. It covers:
+This SOP applies to all clinical data entry, treatment plan creation, appointment scheduling, and billing operations within the Oryx system. It covers:
 
 - Patient record creation and modification
 - Treatment plan documentation
