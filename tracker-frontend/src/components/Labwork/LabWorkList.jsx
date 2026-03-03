@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getLabWorks } from '../../api/labwork';
 import { format } from 'date-fns';
+import { API_BASE_URL } from '../../services/api';
 
 const statusColors = {
   Pending: 'bg-yellow-100 text-yellow-800',
@@ -54,7 +55,7 @@ const LabWorkList = ({ onView }) => {
 
   const fetchPatients = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/patients');
+      const response = await fetch(`${API_BASE_URL}/patients`);
       const data = await response.json();
       setPatients(data);
     } catch (err) {

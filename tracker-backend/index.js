@@ -1,3 +1,6 @@
+// Vercel serverless function entry point
+// This file exports the Express app for Vercel deployment
+
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -9,12 +12,11 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 // Security middleware
@@ -97,12 +99,17 @@ const connectDB = async () => {
     console.log('✅ MongoDB connected successfully');
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
-    // Retry connection after 5 seconds
-    setTimeout(connectDB, 5000);
+    // Retry connection after 5 seconds (only in non-serverless environments)
+    if (process.env.VERCEL !== '1') {
+      setTimeout(connectDB, 5000);
+    }
   }
 };
 
-connectDB();
+// Connect to MongoDB (only if not already connected)
+if (mongoose.connection.readyState === 0) {
+  connectDB();
+}
 
 // Health check endpoints
 app.get('/api/health', (req, res) => {
@@ -156,7 +163,6 @@ app.get('/', (req, res) => {
 });
 
 // Mount API routes
-// app.use('/api/auth', require('./routes/auth')); // Commented out authentication routes
 app.use('/api/patients', require('./src/routes/patientRoutes'));
 app.use('/api/appointments', require('./src/routes/appointments'));
 const labWorkRoutes = require('./src/routes/labWorkRoutes');
@@ -221,25 +227,5 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  mongoose.connection.close(() => {
-    console.log('MongoDB connection closed');
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
-  mongoose.connection.close(() => {
-    console.log('MongoDB connection closed');
-    process.exit(0);
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🔗 API base URL: http://localhost:${PORT}/api`);
-}); 
+// Export the app for Vercel serverless functions
+module.exports = app;

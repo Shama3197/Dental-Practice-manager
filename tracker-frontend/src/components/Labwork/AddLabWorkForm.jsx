@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { addLabWork } from '../../api/labwork';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../../services/api';
 
 const caseTypes = ['Crown', 'Denture', 'Bridge', 'Veneer', 'Implant', 'Inlay', 'Onlay', 'Partial', 'Other'];
 const statusOptions = ['Pending', 'In Progress', 'Received', 'Delayed', 'Completed'];
@@ -30,7 +31,7 @@ const AddLabWorkForm = ({ onSuccess }) => {
 
   const fetchPatients = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/patients');
+      const response = await axios.get(`${API_BASE_URL}/patients`);
       setPatients(response.data);
     } catch (error) {
       console.error('Error fetching patients:', error);

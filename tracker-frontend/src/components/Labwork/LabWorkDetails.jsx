@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getLabWork } from '../../api/labwork';
 import { useParams, Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import LabWorkTimeline from './LabWorkTimeline';
+import LabWorkTimeline from './LabworkTimeline';
 
 const LabWorkDetails = () => {
   const { id } = useParams();

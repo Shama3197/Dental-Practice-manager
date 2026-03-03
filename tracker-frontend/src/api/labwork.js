@@ -1,5 +1,7 @@
 import axios from 'axios';
-const API = axios.create({ baseURL: 'http://localhost:5000/api/labwork' });
+import { API_BASE_URL } from '../services/api';
+
+const API = axios.create({ baseURL: `${API_BASE_URL}/labwork` });
 
 // Get all labwork with pagination and filtering
 export const getLabWorks = (params = {}) => API.get('/', { params });
