@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 
-const LabWorkTimeline = ({ progressImages = [] }) => (
+const LabworkTimeline = ({ progressImages = [] }) => (
   <div className="relative border-l-2 border-blue-200 pl-6">
     {progressImages.map((img, idx) => (
       <div key={idx} className="mb-8 flex items-center">
@@ -22,4 +22,4 @@ const LabWorkTimeline = ({ progressImages = [] }) => (
   </div>
 );
 
-export default LabWorkTimeline; 
+export default LabworkTimeline; 
