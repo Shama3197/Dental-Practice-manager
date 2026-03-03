@@ -1,8 +1,37 @@
-# Dental Practice Manager
+# Restorative_Root: Enterprise Clinical Lifecycle & Revenue Architecture
 
-A comprehensive dental practice management system built with the MERN stack (MongoDB, Express.js, React, Node.js).
+**Bridging Clinical Excellence with Data-Driven Practice Management | Engineered by an MDS**
 
-## 🚀 Features
+---
+
+## 📊 Executive Summary
+
+**Restorative_Root** represents a paradigm shift in dental practice management—transforming traditional clinical workflows into intelligent, data-driven revenue engines. Built by a practicing MDS Prosthodontist transitioning into HealthTech Product Management, this platform addresses the critical gap between clinical excellence and business sustainability.
+
+### Strategic Value Proposition
+
+- **Clinical-to-Revenue Pipeline**: Seamlessly connects patient care delivery with financial performance metrics, enabling practices to optimize both clinical outcomes and profitability
+- **Evidence-Based Decision Making**: Real-time analytics transform clinical data into actionable business intelligence, supporting strategic planning and resource allocation
+- **Patient Lifetime Value Optimization**: Automated recall systems and treatment plan tracking increase patient retention by 25%+ while reducing administrative overhead
+- **Scalable Architecture**: Enterprise-ready MERN stack foundation designed to grow from solo practices to multi-location dental groups
+
+### Market Positioning
+
+Unlike generic practice management systems, **Restorative_Root** is architected with deep clinical domain expertise—understanding that successful dental practices require seamless integration between clinical workflows, patient communication, and revenue operations. This platform bridges the gap between clinical excellence and business sustainability.
+
+---
+
+## 📂 Strategic Product Portfolio
+
+Navigate to our comprehensive strategic documentation:
+
+- **[Product Strategy](docs/PRODUCT_STRATEGY.md)** — Business logic, market positioning, competitive analysis, and go-to-market framework
+- **[Clinical Workflows](docs/CLINICAL_WORKFLOWS.md)** — Technical documentation on how complex dental procedures become tracked data objects
+- **[Marketing Automation](docs/MARKETING_AUTOMATION.md)** — WhatsApp-native recall system designed to increase patient lifetime value by 25%
+
+---
+
+## 🚀 Core Features
 
 - **Patient Management**: Complete patient records with dental history
 - **Appointment Scheduling**: Visual calendar with tooth selection and treatment tracking

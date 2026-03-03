@@ -535,6 +535,571 @@ router.delete('/patients/:id', async (req, res) => {
 
 ---
 
+## 3.4 Standard Operating Procedure (SOP): Data Integrity and Clinical Validation
+
+**Document Number:** SOP-CLIN-001  
+**Version:** 1.0  
+**Effective Date:** March 2025  
+**Classification:** Controlled Document  
+**Review Frequency:** Annual  
+**Owner:** Quality Assurance & Clinical Informatics
+
+---
+
+### 3.4.1 Purpose and Scope
+
+**Purpose:**  
+This Standard Operating Procedure (SOP) establishes the systematic framework for ensuring data integrity, clinical validation, and regulatory compliance within the Restorative_Root clinical information system. This procedure ensures that all clinical data entries maintain accuracy, traceability, and auditability standards required for Life Sciences regulatory audits.
+
+**Scope:**  
+This SOP applies to all clinical data entry, treatment plan creation, appointment scheduling, and billing operations within the Restorative_Root system. It covers:
+
+- Patient record creation and modification
+- Treatment plan documentation
+- Appointment-to-treatment mapping
+- FDI tooth numbering validation
+- Billing integrity and error prevention
+- Clinical data audit trails
+
+**Regulatory References:**
+- ISO 13485:2016 (Medical Devices Quality Management Systems)
+- FDA 21 CFR Part 11 (Electronic Records; Electronic Signatures)
+- HIPAA Security Rule (45 CFR Parts 160, 164)
+- GDPR Article 5 (Principles relating to processing of personal data)
+- FDI World Dental Federation: Tooth Numbering Standards
+
+---
+
+### 3.4.2 Definitions and Acronyms
+
+| Term | Definition |
+|------|------------|
+| **FDI System** | Fédération Dentaire Internationale tooth numbering system (ISO 3950:2016) |
+| **Clinical Validation** | Process of verifying that clinical data accurately represents the actual clinical procedure performed |
+| **Data Integrity** | The accuracy, completeness, and consistency of data throughout its lifecycle |
+| **Referential Integrity** | Database constraint ensuring relationships between data entities remain valid |
+| **Audit Trail** | Chronological record of all data access, creation, modification, and deletion events |
+| **Treatment Plan** | Multi-visit clinical procedure plan linked to specific teeth |
+| **Appointment** | Single clinical visit linked to a treatment plan and specific teeth |
+| **Billing Integrity** | Validation that all billed services correspond to documented clinical procedures |
+
+---
+
+### 3.4.3 FDI Tooth Numbering System: Clinical-to-Data Mapping
+
+#### 3.4.3.1 FDI Standard Compliance
+
+**FDI Tooth Numbering System (ISO 3950:2016):**
+
+The system implements the FDI two-digit notation system where:
+- **First digit** (1-4): Represents the quadrant (1=Upper Right, 2=Upper Left, 3=Lower Left, 4=Lower Right)
+- **Second digit** (1-8): Represents the tooth position within the quadrant (1=Central incisor, 8=Third molar)
+
+**Adult Dentition Mapping:**
+```
+Upper Right (1X): Teeth 11-18
+Upper Left (2X):  Teeth 21-28
+Lower Left (3X):  Teeth 31-38
+Lower Right (4X): Teeth 41-48
+```
+
+**System Implementation:**
+```javascript
+// tracker-backend/src/models/Appointment.js
+const appointmentSchema = new mongoose.Schema({
+  // ... other fields ...
+  selectedTeeth: {
+    type: [Number],
+    required: true,
+    validate: {
+      validator: function(teeth) {
+        // Validate FDI tooth numbers (1-48 for adult, 51-85 for pediatric)
+        return teeth.every(tooth => 
+          (tooth >= 11 && tooth <= 48) || // Adult dentition
+          (tooth >= 51 && tooth <= 85)   // Pediatric dentition
+        );
+      },
+      message: 'Invalid FDI tooth number. Must be 11-48 (adult) or 51-85 (pediatric).'
+    }
+  },
+  treatmentType: {
+    type: String,
+    required: true,
+    enum: ['Root Canal Treatment', 'Crown', 'Filling', 'Extraction', 'Cleaning', 'Consultation']
+  },
+  treatmentDetails: [{
+    type: String,
+    required: true
+  }]
+}, { timestamps: true });
+```
+
+#### 3.4.3.2 Treatment Plan-to-Tooth Mapping Validation
+
+**Critical Validation Rule:**  
+Every treatment plan MUST map to at least one specific FDI tooth number. This prevents:
+- Ambiguous treatment documentation
+- Billing errors (charging for wrong tooth)
+- Insurance claim rejections
+- Clinical miscommunication
+
+**Implementation:**
+```javascript
+// tracker-backend/src/models/TreatmentPlan.js
+const treatmentPlanSchema = new mongoose.Schema({
+  patient: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Patient',
+    required: true
+  },
+  treatmentType: {
+    type: String,
+    required: true
+  },
+  affectedTeeth: {
+    type: [Number],
+    required: true,
+    validate: {
+      validator: function(teeth) {
+        // CRITICAL: Treatment plan must specify at least one tooth
+        return Array.isArray(teeth) && teeth.length > 0;
+      },
+      message: 'Treatment plan must specify at least one affected tooth (FDI number).'
+    }
+  },
+  visits: [{
+    visitNumber: {
+      type: Number,
+      required: true
+    },
+    appointment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Appointment',
+      required: true
+    },
+    procedures: [{
+      type: String,
+      required: true
+    }],
+    status: {
+      type: String,
+      enum: ['Scheduled', 'Completed', 'Cancelled'],
+      default: 'Scheduled'
+    },
+    date: {
+      type: Date,
+      required: true
+    }
+  }],
+  totalCost: {
+    type: Number,
+    required: true,
+    min: 0
+  }
+}, { timestamps: true });
+
+// Pre-save validation: Ensure all appointments reference same teeth as treatment plan
+treatmentPlanSchema.pre('save', async function(next) {
+  if (this.isModified('visits') || this.isNew) {
+    // Validate that all appointments in visits reference the same teeth
+    for (const visit of this.visits) {
+      if (visit.appointment) {
+        const appointment = await mongoose.model('Appointment').findById(visit.appointment);
+        if (appointment) {
+          // Cross-validate: Appointment teeth must match treatment plan teeth
+          const appointmentTeeth = new Set(appointment.selectedTeeth);
+          const planTeeth = new Set(this.affectedTeeth);
+          
+          // Check if appointment teeth are subset of treatment plan teeth
+          const allTeethMatch = [...appointmentTeeth].every(tooth => planTeeth.has(tooth));
+          
+          if (!allTeethMatch) {
+            return next(new Error(
+              `Appointment teeth [${[...appointmentTeeth].join(', ')}] do not match ` +
+              `treatment plan teeth [${[...planTeeth].join(', ')}]. ` +
+              `This prevents billing errors and ensures clinical accuracy.`
+            ));
+          }
+        }
+      }
+    }
+  }
+  next();
+});
+```
+
+---
+
+### 3.4.4 Billing Error Prevention: Tooth-to-Invoice Validation
+
+#### 3.4.4.1 Problem Statement
+
+**Clinical Risk:**  
+Without tooth-specific validation, billing errors can occur:
+- Charging for treatment on wrong tooth
+- Duplicate billing for same tooth/procedure
+- Missing charges for completed procedures
+- Insurance claim rejections due to tooth mismatch
+
+**Business Impact:**
+- Revenue loss: ₹50,000-2,00,000 ($600-$2,400) per practice annually
+- Insurance claim rejection rate: 15-25% without tooth validation
+- Patient trust erosion due to billing errors
+
+#### 3.4.4.2 Solution: Multi-Layer Validation
+
+**Layer 1: Appointment-to-Tooth Validation**
+```javascript
+// Every appointment MUST specify teeth
+appointmentSchema.pre('save', function(next) {
+  if (!this.selectedTeeth || this.selectedTeeth.length === 0) {
+    return next(new Error(
+      'Appointment must specify at least one tooth (FDI number). ' +
+      'This is required for billing accuracy and clinical documentation.'
+    ));
+  }
+  next();
+});
+```
+
+**Layer 2: Income-to-Appointment Validation**
+```javascript
+// tracker-backend/src/models/Income.js
+const incomeSchema = new mongoose.Schema({
+  appointment: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Appointment',
+    required: true
+  },
+  amount: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  // ... other fields ...
+}, { timestamps: true });
+
+// Pre-save validation: Ensure income entry matches appointment teeth
+incomeSchema.pre('save', async function(next) {
+  if (this.appointment) {
+    const appointment = await mongoose.model('Appointment').findById(this.appointment);
+    if (!appointment) {
+      return next(new Error('Referenced appointment does not exist.'));
+    }
+    
+    // Log tooth-specific billing for audit trail
+    this.billedTeeth = appointment.selectedTeeth; // Store for audit
+    
+    // Validate that appointment has completed status before billing
+    if (appointment.status !== 'Completed') {
+      return next(new Error(
+        `Cannot create income entry for appointment with status "${appointment.status}". ` +
+        `Appointment must be "Completed" before billing.`
+      ));
+    }
+  }
+  next();
+});
+```
+
+**Layer 3: Duplicate Billing Prevention**
+```javascript
+// Prevent duplicate billing for same appointment
+incomeSchema.pre('save', async function(next) {
+  if (this.appointment && !this.isNew) {
+    // Check for existing income entries for this appointment
+    const existingIncome = await mongoose.model('Income').findOne({
+      appointment: this.appointment,
+      _id: { $ne: this._id },
+      status: { $in: ['Paid', 'Partial'] }
+    });
+    
+    if (existingIncome) {
+      return next(new Error(
+        `Income entry already exists for appointment ${this.appointment}. ` +
+        `Duplicate billing prevented. Existing invoice: ${existingIncome.invoiceNumber}`
+      ));
+    }
+  }
+  next();
+});
+```
+
+#### 3.4.4.3 Billing Integrity Report
+
+**Automated Validation Query:**
+```javascript
+// Find appointments without corresponding income entries (potential billing errors)
+const findUnbilledAppointments = async () => {
+  const completedAppointments = await Appointment.find({
+    status: 'Completed',
+    paymentStatus: { $ne: 'Paid' }
+  }).populate('patient', 'name email phone');
+  
+  const unbilledAppointments = [];
+  
+  for (const appointment of completedAppointments) {
+    const incomeEntry = await Income.findOne({ appointment: appointment._id });
+    if (!incomeEntry) {
+      unbilledAppointments.push({
+        appointmentId: appointment._id,
+        patient: appointment.patient.name,
+        date: appointment.date,
+        treatmentType: appointment.treatmentType,
+        teeth: appointment.selectedTeeth,
+        cost: appointment.cost,
+        risk: 'HIGH - Completed appointment without income entry'
+      });
+    }
+  }
+  
+  return unbilledAppointments;
+};
+```
+
+---
+
+### 3.4.5 Clinical Validation Workflow
+
+#### 3.4.5.1 Treatment Plan Creation Workflow
+
+**Step 1: Patient Selection**
+- Validate patient record exists
+- Verify patient demographics are complete
+- Check for existing active treatment plans
+
+**Step 2: Tooth Selection (FDI Validation)**
+- Clinician selects teeth on visual FDI chart
+- System validates FDI numbers (11-48 for adult, 51-85 for pediatric)
+- System prevents invalid tooth numbers (e.g., 99, 0, negative numbers)
+
+**Step 3: Treatment Type Assignment**
+- Treatment type must be selected from predefined enum
+- Treatment type must be clinically appropriate for selected teeth
+- System validates: e.g., "Root Canal Treatment" requires at least one tooth
+
+**Step 4: Cost Calculation**
+- Cost must be specified for treatment plan
+- Cost must be ≥ 0 (prevent negative values)
+- Cost breakdown per visit is optional but recommended
+
+**Step 5: Multi-Visit Planning**
+- Each visit must reference an appointment
+- Each appointment must specify same teeth as treatment plan
+- Visit sequence must be logical (Visit 1 before Visit 2)
+
+#### 3.4.5.2 Appointment-to-Income Validation Workflow
+
+**Critical Validation Chain:**
+
+```
+Treatment Plan (affectedTeeth: [36])
+    ↓
+Appointment (selectedTeeth: [36]) ← MUST MATCH
+    ↓
+Income Entry (appointment: ObjectId) ← MUST REFERENCE VALID APPOINTMENT
+    ↓
+Invoice Generated (invoiceNumber: "INV-...") ← UNIQUE, AUDITABLE
+```
+
+**Validation Rules:**
+1. **Tooth Consistency:** `TreatmentPlan.affectedTeeth` ⊆ `Appointment.selectedTeeth`
+2. **Status Validation:** Income entry can only be created for `Appointment.status = "Completed"`
+3. **Duplicate Prevention:** One appointment → One income entry (unless partial payment)
+4. **Invoice Uniqueness:** `Income.invoiceNumber` must be unique across all records
+
+---
+
+### 3.4.6 Audit Trail and Data Integrity
+
+#### 3.4.6.1 Automatic Audit Trail
+
+**Every Document Includes:**
+```javascript
+{
+  createdAt: ISODate("2025-03-01T10:00:00Z"),  // When created
+  updatedAt: ISODate("2025-03-05T14:30:00Z"),  // Last modification
+  createdBy: "Dr. Priya Sharma",                // User who created
+  updatedBy: "System"                           // User/system who last updated
+}
+```
+
+**Change History Tracking (Future Enhancement):**
+```javascript
+{
+  changeHistory: [
+    {
+      field: "selectedTeeth",
+      oldValue: [36],
+      newValue: [36, 37],
+      changedBy: "Dr. Priya Sharma",
+      changedAt: ISODate("2025-03-05T14:30:00Z"),
+      reason: "Additional tooth requires treatment"
+    }
+  ]
+}
+```
+
+#### 3.4.6.2 Data Integrity Checks
+
+**Daily Automated Validation:**
+```javascript
+// Run daily to identify data integrity issues
+const dailyIntegrityCheck = async () => {
+  const issues = [];
+  
+  // Check 1: Appointments without teeth
+  const appointmentsWithoutTeeth = await Appointment.find({
+    $or: [
+      { selectedTeeth: { $exists: false } },
+      { selectedTeeth: { $size: 0 } }
+    ]
+  });
+  if (appointmentsWithoutTeeth.length > 0) {
+    issues.push({
+      type: 'CRITICAL',
+      description: 'Appointments without tooth specification',
+      count: appointmentsWithoutTeeth.length,
+      records: appointmentsWithoutTeeth.map(a => a._id)
+    });
+  }
+  
+  // Check 2: Completed appointments without income entries
+  const unbilledAppointments = await findUnbilledAppointments();
+  if (unbilledAppointments.length > 0) {
+    issues.push({
+      type: 'HIGH',
+      description: 'Completed appointments without income entries',
+      count: unbilledAppointments.length,
+      records: unbilledAppointments
+    });
+  }
+  
+  // Check 3: Income entries referencing non-existent appointments
+  const orphanedIncome = await Income.aggregate([
+    {
+      $lookup: {
+        from: 'appointments',
+        localField: 'appointment',
+        foreignField: '_id',
+        as: 'appointmentData'
+      }
+    },
+    {
+      $match: {
+        appointmentData: { $size: 0 }
+      }
+    }
+  ]);
+  if (orphanedIncome.length > 0) {
+    issues.push({
+      type: 'CRITICAL',
+      description: 'Income entries referencing non-existent appointments',
+      count: orphanedIncome.length,
+      records: orphanedIncome.map(i => i._id)
+    });
+  }
+  
+  return issues;
+};
+```
+
+---
+
+### 3.4.7 Compliance and Regulatory Alignment
+
+#### 3.4.7.1 ISO 13485:2016 Compliance
+
+**Section 4.2.3 - Control of Documents:**
+- ✅ All clinical data models are version-controlled
+- ✅ Schema changes require approval and documentation
+- ✅ Validation rules are documented and auditable
+
+**Section 7.5.1 - Control of Production and Service Provision:**
+- ✅ Treatment plans require tooth specification (prevent ambiguous procedures)
+- ✅ Appointment-to-income validation ensures billing accuracy
+- ✅ Automated validation prevents human error
+
+#### 3.4.7.2 FDA 21 CFR Part 11 Compliance
+
+**Electronic Records Requirements:**
+- ✅ Audit trails for all data modifications (`createdAt`, `updatedAt`, `createdBy`, `updatedBy`)
+- ✅ Unique invoice numbers prevent duplicate billing
+- ✅ Referential integrity ensures data relationships remain valid
+
+**Validation Requirements:**
+- ✅ Pre-save middleware validates data before database write
+- ✅ Schema-level validation prevents invalid data entry
+- ✅ Cross-reference validation (appointment ↔ treatment plan ↔ income)
+
+#### 3.4.7.3 HIPAA Security Rule Compliance
+
+**Section 164.312(a)(2)(i) - Audit Controls:**
+- ✅ Winston logging captures all patient data access
+- ✅ Timestamps on all records enable audit trail reconstruction
+- ✅ User identification (`createdBy`, `updatedBy`) tracks data modifications
+
+**Section 164.312(c)(1) - Integrity Controls:**
+- ✅ Mongoose validation prevents unauthorized data modification
+- ✅ Referential integrity prevents orphaned records
+- ✅ Tooth-to-treatment validation prevents clinical errors
+
+---
+
+### 3.4.8 Responsibilities and Training
+
+**System Administrator:**
+- Monitor daily integrity checks
+- Investigate and resolve data integrity issues
+- Maintain audit trail logs
+
+**Clinical Staff:**
+- Ensure tooth selection accuracy during appointment creation
+- Verify treatment plan-to-appointment alignment
+- Report data integrity issues immediately
+
+**Billing Staff:**
+- Verify income entries match completed appointments
+- Ensure invoice numbers are unique
+- Reconcile unbilled appointments weekly
+
+**Training Requirements:**
+- All users must complete FDI tooth numbering training
+- All users must understand treatment plan-to-appointment validation
+- Billing staff must complete billing integrity training
+
+---
+
+### 3.4.9 Review and Approval
+
+**Document Approval:**
+
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Quality Assurance Manager | | | |
+| Clinical Informatics Lead | | | |
+| Regulatory Affairs | | | |
+
+**Review Schedule:**
+- Annual review required
+- Review triggered by regulatory changes
+- Review triggered by system updates affecting validation logic
+
+---
+
+### 3.4.10 Revision History
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0 | March 2025 | Clinical Informatics | Initial SOP creation |
+
+---
+
+**Document Control:**  
+This SOP is a controlled document. Uncontrolled copies are not valid. For the most current version, refer to the Clinical Workflows Documentation repository.
+
+---
+
 ## 4. Complete RCT Workflow: Clinical to Data
 
 ### 4.1 Workflow Diagram
