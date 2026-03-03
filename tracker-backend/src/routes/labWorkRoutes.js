@@ -269,18 +269,22 @@ router.patch('/:id/status', async (req, res) => {
   try {
     const { status, notes } = req.body;
     
+    // First get the existing lab work to preserve notes
+    const existingLabWork = await LabWork.findById(req.params.id);
+    if (!existingLabWork) {
+      return res.status(404).json({ error: 'Lab work entry not found' });
+    }
+    
     const labWork = await LabWork.findByIdAndUpdate(
       req.params.id,
       { 
         status,
-        notes: notes ? `${labWork.notes || ''}\n${new Date().toISOString()}: ${notes}`.trim() : labWork.notes
+        ...(notes && { 
+          notes: `${existingLabWork.notes || ''}\n${new Date().toISOString()}: ${notes}`.trim() 
+        })
       },
-      { new: true }
+      { new: true, runValidators: true }
     ).populate('patientId', 'name contactNumber email');
-    
-    if (!labWork) {
-      return res.status(404).json({ error: 'Lab work entry not found' });
-    }
     
     res.json(labWork);
   } catch (err) {
