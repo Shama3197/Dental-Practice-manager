@@ -1,0 +1,9 @@
+node_modules
+tracker-frontend/node_modules
+tracker-backend/node_modules
+*.log
+.env
+.env.local
+.DS_Store
+dist
+build
