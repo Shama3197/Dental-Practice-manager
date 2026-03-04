@@ -51,7 +51,7 @@ const AppLayout = ({ children }) => {
 
   return (
     <div 
-      className="flex h-screen w-screen overflow-hidden transition-all duration-300"
+      className={`flex h-screen w-screen overflow-hidden transition-all duration-300 ${isDynamicEnvironment ? 'dynamic-bg-container' : ''}`}
       style={{
         ...getBackgroundStyle(),
         ...(!isDynamicEnvironment && { background: 'linear-gradient(to bottom right, #ecfeff, #f0fdfa)' })

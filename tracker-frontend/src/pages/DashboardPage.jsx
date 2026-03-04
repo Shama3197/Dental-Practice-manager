@@ -232,7 +232,7 @@ const DashboardPage = () => {
 
   return (
     <div
-      className="min-h-screen w-full transition-all duration-300"
+      className={`min-h-screen w-full transition-all duration-300 ${isDynamicEnvironment ? 'dynamic-bg-container' : ''}`}
       style={getDashboardBackgroundStyle()}
     >
       <div className="p-4 max-w-7xl mx-auto space-y-6">
