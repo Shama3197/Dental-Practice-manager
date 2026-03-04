@@ -16,7 +16,7 @@ import {
 } from 'react-icons/fi';
 import { useThemeStore } from '../store/theme';
 import { useUserStore } from '../store/user';
-import { getCircadianState } from '../utils/themeEngine';
+import { getCircadianState, getCurrentHour } from '../utils/themeEngine';
 
 const LabWork = () => {
   const [labWork, setLabWork] = useState([]);
@@ -38,6 +38,37 @@ const LabWork = () => {
     }
     return 'text-gray-900';
   };
+
+  // Get adaptive placard text colors for the 4 stats cards
+  const getPlacardColors = () => {
+    // Safety: If toggle is OFF, MUST revert to original Minimalist UI colors
+    if (!isDynamicEnvironment) {
+      return {
+        title: 'text-gray-600',
+        value: 'text-gray-900'
+      };
+    }
+    
+    // Dynamic text color based on current hour
+    const currentHour = getCurrentHour();
+    const isNight = currentHour >= 18 || currentHour < 6; // Night: 18:00 - 05:59
+    
+    if (isNight) {
+      // Night Mode (18:00 - 05:59): white text for readability
+      return {
+        title: 'text-white',
+        value: 'text-white'
+      };
+    }
+    
+    // Day Mode (06:00 - 17:59): black text for readability
+    return {
+      title: 'text-gray-900',
+      value: 'text-gray-900'
+    };
+  };
+
+  const placardColors = getPlacardColors();
 
   useEffect(() => {
     // Fetch lab work data from API
@@ -390,8 +421,8 @@ const LabWork = () => {
               <FiFileText className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Orders</p>
-              <p className="text-2xl font-bold text-gray-900">{labWork.length}</p>
+              <p className={`text-sm font-medium ${placardColors.title}`}>Total Orders</p>
+              <p className={`text-2xl font-bold ${placardColors.value}`}>{labWork.length}</p>
             </div>
           </div>
         </div>
@@ -402,8 +433,8 @@ const LabWork = () => {
               <FiCheckCircle className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className={`text-sm font-medium ${placardColors.title}`}>Completed</p>
+              <p className={`text-2xl font-bold ${placardColors.value}`}>
                 {labWork.filter(item => item.status === 'completed').length}
               </p>
             </div>
@@ -416,8 +447,8 @@ const LabWork = () => {
               <FiClock className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">In Progress</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className={`text-sm font-medium ${placardColors.title}`}>In Progress</p>
+              <p className={`text-2xl font-bold ${placardColors.value}`}>
                 {labWork.filter(item => item.status === 'in_progress').length}
               </p>
             </div>
@@ -430,8 +461,8 @@ const LabWork = () => {
               <FiAlertCircle className="w-6 h-6 text-yellow-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className={`text-sm font-medium ${placardColors.title}`}>Pending</p>
+              <p className={`text-2xl font-bold ${placardColors.value}`}>
                 {labWork.filter(item => item.status === 'pending').length}
               </p>
             </div>
