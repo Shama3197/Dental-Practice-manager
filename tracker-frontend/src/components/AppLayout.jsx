@@ -59,12 +59,7 @@ const AppLayout = ({ children }) => {
     >
       {/* Sidebar - fixed width, no overlap */}
       <aside className="w-64 min-w-64 h-full shadow-lg flex-shrink-0 flex flex-col z-10">
-        <Sidebar active={getCurrentPage()}>
-          <NavLink to="/calendar" className="sidebar-link">
-            <FiCalendar className="sidebar-icon" />
-            Calendar
-          </NavLink>
-        </Sidebar>
+        <Sidebar />
       </aside>
       {/* Main content area */}
       <main className="flex-1 relative overflow-y-auto">
